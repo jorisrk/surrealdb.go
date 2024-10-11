@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/surrealdb/surrealdb.go/pkg/constants"
@@ -29,7 +30,8 @@ type CustomDateTime time.Time
 func (d *CustomDateTime) MarshalCBOR() ([]byte, error) {
 	enc := getCborEncoder()
 
-	totalNS := time.Time(*d).Nanosecond()
+	t := time.Time(*d)
+	totalNS := t.UnixNano()
 
 	s := totalNS / constants.OneSecondToNanoSecond
 	ns := totalNS % constants.OneSecondToNanoSecond
@@ -49,10 +51,14 @@ func (d *CustomDateTime) UnmarshalCBOR(data []byte) error {
 		return err
 	}
 
-	s := temp[0].(int64)
-	ns := temp[1].(int64)
+	s, ok1 := temp[0].(uint64)
+	ns, ok2 := temp[1].(uint64)
 
-	*d = CustomDateTime(time.Unix(s, ns))
+	if !ok1 || !ok2 {
+		return fmt.Errorf("expected uint64 for seconds and nanoseconds, got %T and %T", temp[0], temp[1])
+	}
+
+	*d = CustomDateTime(time.Unix(int64(s), int64(ns)))
 
 	return nil
 }
