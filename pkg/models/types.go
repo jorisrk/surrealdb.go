@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/surrealdb/surrealdb.go/pkg/constants"
@@ -45,18 +44,14 @@ func (d *CustomDateTime) MarshalCBOR() ([]byte, error) {
 func (d *CustomDateTime) UnmarshalCBOR(data []byte) error {
 	dec := getCborDecoder()
 
-	var temp [2]interface{}
+	var temp [2]uint64
 	err := dec.Unmarshal(data, &temp)
 	if err != nil {
 		return err
 	}
 
-	s, ok1 := temp[0].(uint64)
-	ns, ok2 := temp[1].(uint64)
-
-	if !ok1 || !ok2 {
-		return fmt.Errorf("expected uint64 for seconds and nanoseconds, got %T and %T", temp[0], temp[1])
-	}
+	s := temp[0]
+	ns := temp[1]
 
 	*d = CustomDateTime(time.Unix(int64(s), int64(ns)))
 
